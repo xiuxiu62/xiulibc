@@ -1,5 +1,5 @@
-#include "core/logger.h"
-#include "core/time/clock.h"
+#include "../common/logger.hpp"
+#include "clock.hpp"
 
 #define MAX_ELAPSED_TIME (24.0 * 60.0 * 60.0) // 24 hours in seconds
 
@@ -7,7 +7,8 @@ Clock global_clock;
 
 Clock clock_create() {
     auto now = std::chrono::high_resolution_clock::now();
-    return {
+
+    return Clock{
         .start_time = now,
         .previous_time = now,
         .elapsed = 0,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/types.h"
+#include "../common/types.hpp"
 
 struct Timer {
     f64 duration;

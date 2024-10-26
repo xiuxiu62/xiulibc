@@ -1,23 +1,23 @@
 #pragma once
 
-#include "../common/types.h"
+#include "../common/types.hpp"
 #include "common.hpp"
 
 #include <memory>
 
 struct Pool {
-  u8 *data;            // Holds the underlying data
-  u8 *validity_bitmap; // Tracks the validity of indicies
-  usize *slots;        // Tracks the availability of interlaced indicies
-  usize stride;        // Size of an item
-  usize capacity;      // Size of the pool
-  usize len;           // Number of live items
-  usize extent;        // The maximum possible index of the used bounding region
-  usize slot_count;    // Number of dead indices
+    u8 *data;            // Holds the underlying data
+    u8 *validity_bitmap; // Tracks the validity of indicies
+    usize *slots;        // Tracks the availability of interlaced indicies
+    usize stride;        // Size of an item
+    usize capacity;      // Size of the pool
+    usize len;           // Number of live items
+    usize extent;        // The maximum possible index of the used bounding region
+    usize slot_count;    // Number of dead indices
 };
 
 struct Handle {
-  isize index;
+    isize index;
 };
 
 PoolStatus pool_create(Pool &pool, usize stride, usize initial_capacity);

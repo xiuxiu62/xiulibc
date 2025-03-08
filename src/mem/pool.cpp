@@ -29,7 +29,7 @@ PoolStatus pool_reserve(Pool &pool, usize capacity) {
 
     u8 *data = static_cast<u8 *>(realloc(pool.data, capacity * pool.stride));
     usize *slots = static_cast<usize *>(realloc(pool.slots, capacity * sizeof(usize)));
-    u8 *validity_bitmap = static_cast<u8 *>(realloc(pool.validity_bitmap, capacity * sizeof(usize)));
+    u8 *validity_bitmap = static_cast<u8 *>(realloc(pool.validity_bitmap, (capacity + 7) / 8));
 
     if (!data || !slots || !validity_bitmap) return PoolStatus::RESIZE_FAILED;
 

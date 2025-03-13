@@ -2,20 +2,20 @@
 
 #include "common/types.hpp"
 
-enum PoolStatus {
-    OK = 0,
-    CREATED = 1,
-    DESTROYED = 2,
-    UNINIT = 3,
-    RESIZE_FAILED = 4,
-    UNCHANGED = 5,
+enum class PoolStatus {
+    Ok = 0,
+    Created = 1,
+    Destroyed = 2,
+    Uninit = 3,
+    ResizeFailed = 4,
+    Unchanged = 5,
 };
 
-inline bool get_validitiy_bit(const u8 *bitmap, usize index) {
+inline bool get_validity_bit(const u8 *bitmap, usize index) {
     return (bitmap[index / 8] >> (index % 8)) & 1;
 }
 
-inline void set_validitiy_bit(u8 *bitmap, usize index, bool value) {
+inline void set_validity_bit(u8 *bitmap, usize index, bool value) {
     if (value) {
         bitmap[index / 8] |= (1 << (index % 8));
     } else {

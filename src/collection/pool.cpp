@@ -1,134 +1,158 @@
 #include "collection/pool.hpp"
 #include "collection/common.hpp"
+#include "common/types.hpp"
 
 #include <cstdlib>
 #include <cstring>
 
-PoolStatus pool_create(Pool &pool, usize stride, usize initial_capacity) {
-    pool.stride = stride;
+template <typename T> Pool<T> Pool<T>::create(usize initial_capacity) {
+    Pool<T> pool;
     pool.capacity = initial_capacity;
-    pool.len = 0;
-    pool.extent = 0;
-    pool.slot_count = 0;
-
-    pool.data = static_cast<u8 *>(malloc(initial_capacity * stride));
-    pool.slots = static_cast<usize *>(calloc(initial_capacity * sizeof(usize), 0));
-    pool.validity_bitmap = static_cast<u8 *>(calloc((initial_capacity + 7) / 8, 0));
-
-    if (!pool.data || !pool.slots || !pool.validity_bitmap)
-        return PoolStatus::UNINIT;
-    else
-        return PoolStatus::CREATED;
+    pool.data = static_cast<T *>(malloc(initial_capacity * sizeof(T)));
+    pool.slots = static_cast<usize *>(calloc(initial_capacity, sizeof(usize)));
+    pool.validity_bitmap = static_cast<u8 *>(calloc((initial_capacity + 7) / 8, 1));
+    return pool;
 }
 
-void pool_destroy(Pool &pool) {
-    free(pool.data);
-    free(pool.slots);
-    free(pool.validity_bitmap);
+template <typename T> Pool<T> Pool<T>::create(PoolStatus &status, usize initial_capacity) {
+    Pool<T> pool;
+    pool.capacity = initial_capacity;
+    pool.data = static_cast<T *>(malloc(initial_capacity * sizeof(T)));
+    pool.slots = static_cast<usize *>(calloc(initial_capacity, sizeof(usize)));
+    pool.validity_bitmap = static_cast<u8 *>(calloc((initial_capacity + 7) / 8, 1));
+
+    if (!pool.data || !pool.slots || !pool.validity_bitmap) {
+        status = PoolStatus::Uninit;
+    } else {
+        status = PoolStatus::Created;
+    }
+
+    return pool;
 }
 
-PoolStatus pool_reserve(Pool &pool, usize capacity) {
-    if (capacity <= pool.capacity) return PoolStatus::OK;
-
-    u8 *data = static_cast<u8 *>(realloc(pool.data, capacity * pool.stride));
-    usize *slots = static_cast<usize *>(realloc(pool.slots, capacity * sizeof(usize)));
-    u8 *validity_bitmap = static_cast<u8 *>(realloc(pool.validity_bitmap, (capacity + 7) / 8));
-
-    if (!data || !slots || !validity_bitmap) return PoolStatus::RESIZE_FAILED;
-
-    memset(slots + pool.capacity, 0, (capacity - pool.capacity) * sizeof(usize));
-    memset(validity_bitmap + ((pool.capacity + 7) / 8), 0, ((capacity + 7) / 8) - ((pool.capacity + 7) / 8));
-
-    pool.data = data;
-    pool.slots = slots;
-    pool.validity_bitmap = validity_bitmap;
-    pool.capacity = capacity;
-
-    return PoolStatus::OK;
+template <typename T> void Pool<T>::destroy() {
+    free(data);
+    free(slots);
+    free(validity_bitmap);
 }
 
-PoolStatus pool_shrink_to_fit(Pool &pool) {
-    if (pool.extent == 0) return PoolStatus::UNCHANGED;
-    usize min_capacity = ceil_pow_2(pool.extent);
+template <typename T> PoolStatus Pool<T>::reserve(usize new_capacity) {
+    // Return early if we already match this capacity
+    if (new_capacity <= capacity) return PoolStatus::Ok;
 
-    // Don't shrink if we're using most of the capacity
-    if (pool.capacity - min_capacity < (pool.capacity / 4)) return PoolStatus::UNCHANGED; // Less than 25% waste
+    // Resize buffers
+    data = static_cast<T *>(realloc(data, new_capacity * sizeof(T)));
+    slots = static_cast<usize *>(realloc(slots, new_capacity * sizeof(usize)));
+    validity_bitmap = static_cast<u8 *>(realloc(validity_bitmap, (new_capacity + 7) / 8));
 
-    u8 *data = static_cast<u8 *>(realloc(pool.data, min_capacity * pool.stride));
-    usize *slots = static_cast<usize *>(realloc(pool.slots, min_capacity * sizeof(usize)));
-    u8 *validity_bitmap = static_cast<u8 *>(realloc(pool.validity_bitmap, (min_capacity + 7) / 8));
+    if (!data || !slots || !validity_bitmap) return PoolStatus::ResizeFailed;
 
-    if (!data || !slots || !validity_bitmap) return PoolStatus::RESIZE_FAILED;
+    // Zero out new memory regions
+    memset(slots + capacity, 0, (new_capacity - capacity) * sizeof(usize));
+    memset(validity_bitmap + ((capacity + 7) / 8), 0, ((new_capacity + 7) / 8) - ((capacity + 7) / 8));
 
-    pool.data = data;
-    pool.slots = slots;
-    pool.validity_bitmap = validity_bitmap;
-    pool.capacity = min_capacity;
+    capacity = new_capacity;
 
-    return PoolStatus::OK;
+    return PoolStatus::Ok;
 }
 
-Handle pool_alloc(Pool &pool) {
-    Handle handle{-1};
+template <typename T> PoolStatus Pool<T>::shrink_to_fit() {
+    if (extent == 0) return PoolStatus::Unchanged;
+    usize min_capacity = ceil_pow_2(extent);
+
+    // Don't shrink if we're using most of the capacity (wasting less than 25%)
+    if (capacity - min_capacity < (capacity / 4)) return PoolStatus::Unchanged;
+
+    data = static_cast<T *>(realloc(data, min_capacity * sizeof(T)));
+    slots = static_cast<usize *>(realloc(slots, min_capacity * sizeof(usize)));
+    validity_bitmap = static_cast<u8 *>(realloc(validity_bitmap, (min_capacity + 7) / 8));
+
+    if (!data || !slots || !validity_bitmap) return PoolStatus::ResizeFailed;
+
+    capacity = min_capacity;
+
+    return PoolStatus::Ok;
+}
+
+template <typename T> PoolHandle Pool<T>::alloc() {
+    PoolHandle handle = -1;
     PoolStatus status;
 
-    if (pool.len >= pool.capacity) {
-        status = pool_reserve(pool, pool.capacity * 2);
-        if (status == PoolStatus::UNINIT) return handle;
+    // Double the buffer size if necessary
+    if (len >= capacity) {
+        status = reserve(capacity * 2);
+        if (status != PoolStatus::Ok) return handle;
     }
 
     usize index;
-    if (pool.slot_count > 0) {
-        index = pool.slots[pool.len];
-        pool.slot_count--;
+    if (slot_count > 0) {
+        index = slots[len];
+        slot_count--;
     } else {
-        index = pool.len;
+        index = len;
     }
-    handle = Handle{static_cast<isize>(index)};
+    handle = index;
 
-    set_validitiy_bit(pool.validity_bitmap, index, true);
-    pool.len++;
+    set_validity_bit(validity_bitmap, index, true);
+    len++;
 
-    if (index >= pool.extent) pool.extent = index + 1;
+    if (index >= extent) extent = index + 1;
 
     return handle;
 }
 
-void pool_free(Pool &pool, Handle handle) {
-    if (handle.index < 0) return;
-    usize index = static_cast<usize>(handle.index);
+template <typename T> PoolHandle Pool<T>::push(T value) {
+    PoolHandle handle = alloc();
+
+    // If allocation failed, return invalid handle
+    if (handle == INVALID_HANDLE) return INVALID_HANDLE;
+
+    // Set the value
+    data[handle] = value;
+
+    return handle;
+}
+
+template <typename T> void Pool<T>::remove(PoolHandle handle) {
+    if (handle < 0) return;
 
     // Ensure handle is valid
-    bool out_of_bounds = index > pool.extent;
-    bool is_valid = !get_validitiy_bit(pool.validity_bitmap, index);
+    bool out_of_bounds = handle > extent;
+    bool is_valid = !get_validity_bit(validity_bitmap, handle);
     if (out_of_bounds || !is_valid) return;
 
     // Clear index validity
-    set_validitiy_bit(pool.validity_bitmap, index, false);
+    set_validity_bit(validity_bitmap, handle, false);
 
     // Add to free list
-    pool.slots[pool.len - 1] = index;
-    pool.len--;
-    pool.slot_count++;
+    slots[len - 1] = handle;
+    len--;
+    slot_count++;
 
     // Update extent if freeing the last element
-    if (index == pool.extent - 1) pool.extent--;
+    if (handle == extent - 1) extent--;
 }
 
-u8 *pool_get_unchecked(const Pool &pool, Handle handle) {
-    if (handle.index < 0) return nullptr;
-
-    return pool.data + (handle.index * pool.stride);
+template <typename T> T *Pool<T>::get_unchecked(PoolHandle handle) {
+    return data[handle];
 }
 
-u8 *pool_get(const Pool &pool, Handle handle) {
-    if (handle.index < 0) return nullptr;
+template <typename T> const T *Pool<T>::get_unchecked(PoolHandle handle) const {
+    return data[handle];
+}
 
-    usize index = static_cast<usize>(handle.index);
+template <typename T> T *Pool<T>::get(PoolHandle handle) {
+    if (handle >= extent || !get_validity_bit(validity_bitmap, handle)) {
+        return nullptr;
+    } else {
+        return data[handle];
+    }
+}
 
-    bool in_bounds = index < pool.extent;
-    bool is_valid = get_validitiy_bit(pool.validity_bitmap, index);
-    if (!in_bounds || !is_valid) return nullptr;
-
-    return pool.data + (handle.index * pool.stride);
+template <typename T> const T *Pool<T>::get(PoolHandle handle) const {
+    if (handle >= extent || !get_validity_bit(validity_bitmap, handle)) {
+        return nullptr;
+    } else {
+        return data[handle];
+    }
 }

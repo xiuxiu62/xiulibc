@@ -1,16 +1,18 @@
 #pragma once
 
-typedef char i8;
-typedef short i16;
-typedef int i32;
-typedef long long i64;
-typedef i64 isize;
+#include <cstdint>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
-typedef u64 usize;
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+typedef intptr_t isize;
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef uintptr_t usize;
 
 typedef float f32;
 typedef double f64;

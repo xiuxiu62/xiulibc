@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/types.h"
+#include "common/types.hpp"
 
 constexpr f32 EPSILON = 1e-6f;
 constexpr f32 PI = 3.1415926535897932384626433832795;

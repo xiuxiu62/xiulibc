@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/types.hpp"
+#include "common/types.hpp"
 
 enum PoolStatus {
     OK = 0,

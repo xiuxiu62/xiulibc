@@ -1,9 +1,7 @@
 #pragma once
 
-#include "../common/types.hpp"
 #include "common.hpp"
-
-#include <memory>
+#include "common/types.hpp"
 
 struct Pool {
     u8 *data;            // Holds the underlying data

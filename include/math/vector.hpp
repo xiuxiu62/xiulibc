@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/types.h"
+#include "common/types.hpp"
 
 #include <immintrin.h>
 #include <mmintrin.h>
@@ -10,11 +10,11 @@ struct Vec2 {
     f32 x, y;
 
     static inline constexpr Vec2 ZERO() {
-        return Vec2{.x = 0, .y = 0};
+        return {0, 0};
     }
 
     static inline constexpr Vec2 ONE() {
-        return Vec2{.x = 1, .y = 1};
+        return Vec2{1, 1};
     }
 
     inline Vec2 operator+(const f32 s) const {
@@ -203,19 +203,19 @@ struct alignas(16) Vec4 {
     };
 
     static inline constexpr Vec4 ZERO() {
-        return {0, 0, 0, 0};
+        return {{{0, 0, 0, 0}}};
     }
 
     static inline constexpr Vec4 ONE() {
-        return {1, 1, 1, 1};
+        return {{{1, 1, 1, 1}}};
     }
 
     inline constexpr Vec4 operator+(const f32 s) const {
-        return {x + s, y + s, z + s, w + s};
+        return {{{x + s, y + s, z + s, w + s}}};
     }
 
     inline constexpr Vec4 operator+(const Vec4 &v) const {
-        return {x + v.x, y + v.y, z + v.z, w + v.w};
+        return {{{x + v.x, y + v.y, z + v.z, w + v.w}}};
     }
 
     inline void operator+=(const f32 s) {
@@ -233,11 +233,11 @@ struct alignas(16) Vec4 {
     }
 
     inline constexpr Vec4 operator-(const f32 s) const {
-        return {x - s, y - s, z - s, w - s};
+        return {{{x - s, y - s, z - s, w - s}}};
     }
 
     inline constexpr Vec4 operator-(const Vec4 &v) const {
-        return {x - v.x, y - v.y, z - v.z, w - v.w};
+        return {{{x - v.x, y - v.y, z - v.z, w - v.w}}};
     }
 
     inline void operator-=(const f32 s) {
@@ -255,11 +255,11 @@ struct alignas(16) Vec4 {
     }
 
     inline constexpr Vec4 operator*(const f32 s) const {
-        return {x * s, y * s, z * s, w * s};
+        return {{{x * s, y * s, z * s, w * s}}};
     }
 
     inline constexpr Vec4 operator*(const Vec4 &v) const {
-        return {x * v.x, y * v.y, z * v.z, w * v.w};
+        return {{{x * v.x, y * v.y, z * v.z, w * v.w}}};
     }
 
     inline void operator*=(const f32 s) {
@@ -278,11 +278,11 @@ struct alignas(16) Vec4 {
     }
 
     inline constexpr Vec4 operator/(const f32 s) const {
-        return {x / s, y / s, z / s, w / s};
+        return {{{x / s, y / s, z / s, w / s}}};
     }
 
     inline constexpr Vec4 operator/(const Vec4 &v) const {
-        return {x / v.x, y / v.y, z / v.z, w / v.w};
+        return {{{x / v.x, y / v.y, z / v.z, w / v.w}}};
     }
 
     inline void operator/=(const f32 s) {

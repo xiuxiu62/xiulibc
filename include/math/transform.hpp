@@ -1,19 +1,15 @@
 #pragma once
 
-#include "matrix.h"
-#include "rotor.h"
-#include "vector.h"
+#include "math/matrix.hpp"
+#include "math/rotor.hpp"
+#include "math/vector.hpp"
 
 struct Transform {
     Vec2 translation, scale;
     Rot2 rotation;
 
     static constexpr Transform DEFAULT() {
-        return {
-            .translation = Vec2::ZERO(),
-            .scale = Vec2::ONE(),
-            .rotation = Rot2::IDENTITY(),
-        };
+        return {Vec2::ZERO(), Vec2::ONE(), Rot2::IDENTITY()};
     }
 
     static Transform from_translation(Vec2 translation);

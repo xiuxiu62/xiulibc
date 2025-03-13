@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/types.hpp"
+#include "common/types.hpp"
 
 struct GenerationalPool {
     u8 *data;            // Holds the underlying data

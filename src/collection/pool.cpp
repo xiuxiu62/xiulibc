@@ -1,5 +1,8 @@
-#include "pool.hpp"
-#include "common.hpp"
+#include "collection/pool.hpp"
+#include "collection/common.hpp"
+
+#include <cstdlib>
+#include <cstring>
 
 PoolStatus pool_create(Pool &pool, usize stride, usize initial_capacity) {
     pool.stride = stride;

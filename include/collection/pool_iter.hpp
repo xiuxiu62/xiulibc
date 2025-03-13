@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../common/types.hpp"
-#include "generational_pool.hpp"
-#include "pool.hpp"
+#include "collection/generational_pool.hpp"
+#include "collection/pool.hpp"
+#include "common/types.hpp"
 
 struct PoolIter {
     const u8 *validity_bitmap;

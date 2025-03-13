@@ -1,29 +1,31 @@
-#include "timer.hpp"
+#include "time/timer.hpp"
 
 #include <cmath>
 
-Timer timer_create(f64 duration, bool repeat) {
-    return {
-        .duration = duration,
-        .current_time = 0,
-        .repeat = repeat,
-    };
+// TODO: accumulate proper offset deltas for resets
+
+Timer Timer::create(f64 duration, bool repeat) {
+    Timer timer;
+    timer.duration = duration;
+    timer.repeat = repeat;
+    return timer;
 }
 
-void timer_update(Timer *timer, f64 delta_t) {
-    timer->current_time += delta_t;
-    if (timer_is_finished(timer) && timer->repeat) timer_reset(timer);
+void Timer::update(f64 delta_t) {
+    current_time += delta_t;
+    if (repeat && finished()) reset();
 }
 
-bool timer_is_finished(const Timer *timer) {
-    return timer->current_time >= timer->duration;
+bool Timer::finished() {
+    return current_time >= duration;
 }
 
-void timer_reset(Timer *timer) {
-    timer->current_time = 0.0;
+void Timer::reset() {
+    current_time = 0.0;
 }
 
-f64 timer_progress(const Timer *timer) {
-    if (timer->duration <= 0.0) return 0.0;
-    return std::fmin(timer->current_time / timer->duration, 1.0);
+// completion percentage of a timer (0 to 1).
+f64 Timer::progress() {
+    if (duration <= 0.0) return 0.0;
+    return std::fmin(current_time / duration, 1.0);
 }
